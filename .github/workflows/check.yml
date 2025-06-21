@@ -62,5 +62,3 @@ jobs:
     needs: check-for-updates
     if: needs.check-for-updates.outputs.needs_build == 'true'
     uses: ./.github/workflows/build_release.yml
-    with:
-      version: ${{ needs.check-for-updates.outputs.latest_version }}
