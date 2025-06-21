@@ -1,5 +1,8 @@
 name: Check for New YandexMusicModClient Releases
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   schedule:
