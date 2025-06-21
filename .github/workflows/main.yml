@@ -1,0 +1,39 @@
+name: Patch and Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          check-latest: true
+          
+      - name: Клонировать YandexMusicModClient
+        run: git clone https://github.com/TheKing-OfTime/YandexMusicModClient.git
+        
+      - name: Патчинг
+        shell: pwsh
+        run: ./PatcherApp.exe YandexMusicModClient/src
+
+      - name: Установить зависимости
+        working-directory: YandexMusicModClient
+        run: npm install
+
+      - name: Собрать проект
+        working-directory: YandexMusicModClient
+        run: node toolset.js build -d
+
+      - name: Загрузить артефакт сборки
+        uses: actions/upload-artifact@v4
+        with:
+          name: YandexMusicModClient-Windows-Build
+          path: C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
