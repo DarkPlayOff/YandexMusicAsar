@@ -25,11 +25,15 @@ jobs:
         run: |
           $response = Invoke-RestMethod -Uri "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest"
           $version = $response.tag_name
+          $releaseTitle = $response.name
           $releaseNotes = $response.body
           echo "version=$version" >> $env:GITHUB_OUTPUT
-          $cleanReleaseNotes = $releaseNotes -replace "`n", '%0A'
-          echo "notes=$cleanReleaseNotes" >> $env:GITHUB_OUTPUT
+          echo "title=$releaseTitle" >> $env:GITHUB_OUTPUT
+          echo "notes<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$releaseNotes" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
           echo "Последняя версия: $version"
+          echo "Заголовок релиза: $releaseTitle"
           echo "Описание релиза: $releaseNotes"
           
       - name: Клонировать YandexMusicModClient
@@ -46,7 +50,7 @@ jobs:
 
       - name: Собрать проект
         working-directory: YandexMusicModClient
-        run: node toolset.js build -d
+        run: node toolset.js build -d -m
 
       - name: Загрузить артефакт сборки
         uses: actions/upload-artifact@v4
@@ -58,12 +62,12 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          name: "YandexMusicModClient ${{ steps.get_latest_release.outputs.version }}"
+          name: "Патч для Яндекс Музыки ${{ steps.get_latest_release.outputs.title }}"
           tag_name: "mod-${{ steps.get_latest_release.outputs.version }}"
           body: |
             # Модифицированная сборка YandexMusicModClient с активированным плюсом
             
-            Основано на версии ${{ steps.get_latest_release.outputs.version }}
+            Основано на версии [${{ steps.get_latest_release.outputs.title }}](https://github.com/TheKing-OfTime/YandexMusicModClient/releases/tag/${{ steps.get_latest_release.outputs.version }})
             
             ## Изменения из оригинального релиза:
             ${{ steps.get_latest_release.outputs.notes }}
