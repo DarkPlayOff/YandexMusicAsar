@@ -55,11 +55,23 @@ jobs:
         working-directory: YandexMusicModClient
         run: node toolset.js build -d -m
 
-      - name: Загрузить артефакт сборки
-        uses: actions/upload-artifact@v4
-        with:
-          name: YandexMusicModClient-Windows-Build
-          path: C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
+      - name: Запаковка в GZ архив
+        shell: pwsh
+        run: |
+          $AsarPath = "C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar"
+          $GzPath = ".\app.asar.gz"
+          
+          # Копируем оригинальный файл для сохранения
+          Copy-Item -Path $AsarPath -Destination ".\app.asar"
+          
+          # Создаем GZ архив
+          $bytes = [System.IO.File]::ReadAllBytes($AsarPath)
+          $ms = New-Object System.IO.MemoryStream
+          $gz = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionLevel]::Optimal)
+          $gz.Write($bytes, 0, $bytes.Length)
+          $gz.Close()
+          [System.IO.File]::WriteAllBytes($GzPath, $ms.ToArray())
+          $ms.Close()
 
       - name: Создать релиз
         id: create_release
@@ -77,5 +89,6 @@ jobs:
             
           files: |
             C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
+            app.asar.gz
           draft: false
           fail_on_unmatched_files: true
