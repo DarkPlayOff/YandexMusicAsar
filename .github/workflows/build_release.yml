@@ -65,7 +65,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Патч для Яндекс Музыки ${{ steps.get_latest_release.outputs.title }}"
+          name: "${{ steps.get_latest_release.outputs.title }}"
           tag_name: "mod-${{ steps.get_latest_release.outputs.version }}"
           body: |
             # Модифицированная сборка YandexMusicModClient с активированным плюсом
