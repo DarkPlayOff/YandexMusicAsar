@@ -1,0 +1,74 @@
+name: Patch, Build and Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          check-latest: true
+          
+      - name: Получить информацию о последнем релизе
+        id: get_latest_release
+        shell: pwsh
+        run: |
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest"
+          $version = $response.tag_name
+          $releaseNotes = $response.body
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          $cleanReleaseNotes = $releaseNotes -replace "`n", '%0A'
+          echo "notes=$cleanReleaseNotes" >> $env:GITHUB_OUTPUT
+          echo "Последняя версия: $version"
+          echo "Описание релиза: $releaseNotes"
+          
+      - name: Клонировать YandexMusicModClient
+        run: git clone https://github.com/TheKing-OfTime/YandexMusicModClient.git
+        
+      - name: Патчинг
+        shell: pwsh
+        run: |
+          ./PatcherApp.exe YandexMusicModClient/src
+        
+      - name: Установить зависимости
+        working-directory: YandexMusicModClient
+        run: npm install
+
+      - name: Собрать проект
+        working-directory: YandexMusicModClient
+        run: node toolset.js build -d
+
+      - name: Загрузить артефакт сборки
+        uses: actions/upload-artifact@v4
+        with:
+          name: YandexMusicModClient-Windows-Build
+          path: C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
+
+      - name: Создать релиз
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "YandexMusicModClient ${{ steps.get_latest_release.outputs.version }}"
+          tag_name: "mod-${{ steps.get_latest_release.outputs.version }}"
+          body: |
+            # Модифицированная сборка YandexMusicModClient с активированным плюсом
+            
+            Основано на версии ${{ steps.get_latest_release.outputs.version }}
+            
+            ## Изменения из оригинального релиза:
+            ${{ steps.get_latest_release.outputs.notes }}
+            
+          files: |
+            C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
+          draft: false
+          fail_on_unmatched_files: true
