@@ -1,6 +1,7 @@
 name: Check for New YandexMusicModClient Releases
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */1 * * *'
 
