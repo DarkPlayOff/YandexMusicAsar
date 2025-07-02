@@ -51,7 +51,12 @@ jobs:
             echo "Нужна сборка новой версии: $ORIGINAL"
           fi
           echo "needs_build=$NEEDS_BUILD" >> $GITHUB_OUTPUT
-          echo "latest_version=$ORIGINAL" >> $GITHUB_OUTPUT
+          echo "latest_version=$ORIGINAL" >> $GITHUB_OUTPUT 
+          
+          build-if-needed:
+          needs: check-for-updates
+          if: needs.check-for-updates.outputs.needs_build == 'true'
+          uses: ./.github/workflows/build_release.yml
 
       - name: Очистить старые workflow runs
         env:
