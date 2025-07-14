@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PatcherApp
 {
@@ -115,7 +116,7 @@ namespace PatcherApp
             var htmlFiles = Directory.GetFiles(Path.Combine(appPath, "app"), "*.html", SearchOption.AllDirectories);
             var injectHtml = File.ReadAllText("mods/inject/_appIndexHtml.js", Encoding.UTF8);
             Console.WriteLine($"Найдено {htmlFiles.Length} HTML файлов для патчинга");
-            foreach (var file in htmlFiles)
+            Parallel.ForEach(htmlFiles, file =>
             {
                 Console.WriteLine($"Проверка HTML файла: {file}");
                 var content = File.ReadAllText(file, Encoding.UTF8);
@@ -124,7 +125,7 @@ namespace PatcherApp
                 if (content.Contains(injectHtml))
                 {
                     Console.WriteLine($"HTML файл {file} уже содержит инжект, пропускаем");
-                    continue;
+                    return;
                 }
                 
                 Console.WriteLine($"Патчинг HTML файла: {file}");
@@ -132,7 +133,7 @@ namespace PatcherApp
                         $"<head><script>{File.ReadAllText("mods/inject/_appIndexHtml.js")}</script>");
                 File.WriteAllText(file, content, Encoding.UTF8);
                 Console.WriteLine($"HTML файл успешно модифицирован: {file}");
-            }
+            });
         
 
             // Удалить видео-заставку
