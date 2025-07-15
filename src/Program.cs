@@ -58,7 +58,15 @@ namespace PatcherApp
             
             var newModsPath = Path.GetFullPath(Path.Combine(appPath, "app/_next/static/yandex_mod"));
             Console.WriteLine($"Создание папки модов: {newModsPath}");
-            Directory.CreateDirectory(Path.GetDirectoryName(newModsPath));
+            var parentDir = Path.GetDirectoryName(newModsPath);
+            if (parentDir != null)
+            {
+                Directory.CreateDirectory(parentDir);
+            }
+            else
+            {
+                throw new DirectoryNotFoundException($"Не удалось получить родительскую директорию для: {newModsPath}");
+            }
             
             Console.WriteLine("Копирование файлов модов...");
             CopyFilesRecursively(Path.GetFullPath("mods"), newModsPath);
@@ -147,6 +155,19 @@ namespace PatcherApp
             else
             {
                 Console.WriteLine($"Директория видео-заставки не найдена: {splashPath}");
+            }
+
+            // Замена URL обновления
+            var modUpdaterPath = Path.Combine(appPath, "main/lib/modUpdater.js");
+            if (File.Exists(modUpdaterPath))
+            {
+                ReplaceFileContents(modUpdaterPath, 
+                    "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest", 
+                    "https://api.github.com/repos/DarkPlayOff/YandexMusicAsar/releases/latest");
+            }
+            else
+            {
+                Console.WriteLine($"Ошибка: Файл для обновлени�� не найден: {modUpdaterPath}");
             }
 
             Console.WriteLine("Все патчи успешно применены!");
