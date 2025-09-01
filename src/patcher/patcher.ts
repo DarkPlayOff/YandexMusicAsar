@@ -85,6 +85,24 @@ async function removeSplashScreen(appPath: string, log: ProgressLogger) {
   }
 }
 
+async function patchUpdater(updaterPath: string, log: ProgressLogger) {
+  log("🛠️  Patching updater URL");
+
+    let updaterContents = await fs.readFile(updaterPath, "utf8");
+    const oldUrl = "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest";
+    const newUrl = "https://api.github.com/repos/DarkPlayOff/YandexMusicAsar/releases/latest";
+
+    if (updaterContents.includes(oldUrl)) {
+      updaterContents = updaterContents.replaceAll(oldUrl, newUrl);
+      await fs.writeFile(updaterPath, updaterContents);
+    try {
+    log("✔️   Done");
+  } catch (error) {
+    log("⚠️  Splash screen was not found, skipping.");
+  }
+}
+}
+
 async function buildAndInjectMods(
   appPath: string,
   mainJsContents: string,
@@ -158,6 +176,9 @@ export async function processBuild(appPath: string): Promise<string[]> {
     logProgress(`[1] Patching sources in ${appPath}`);
 
     await verifyStaticFiles(appPath, logProgress);
+
+    const updaterJsPath = path.join(appPath, staticFiles.updaterJs);
+    await patchUpdater(updaterJsPath, logProgress);
 
     const mainJsPath = path.join(appPath, staticFiles.mainJs);
     let mainJsContents = await patchMainJsForAnalytics(mainJsPath, logProgress);
