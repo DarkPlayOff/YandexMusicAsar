@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
-import { Result, ResultAsync, ok, err, okAsync, errAsync } from "neverthrow";
+import { Result, ok, err  } from "neverthrow";
 
 const SECRET_KEY = "kzqU4XhfCaY6B6JTHODeq5";
 const OAuthToken = localStorage.oauth ? "OAuth " + JSON.parse(localStorage.oauth).value : null;
@@ -96,71 +96,6 @@ export async function getTrackUrl(trackId: string, quality: QualityEnum): Promis
   }
 }
 
-// Получить треки из альбома
-export async function getAlbumTracks(id: string): Promise<Result<string[], string>> {
-  try {
-    const response = await yandexMusicClient.get(
-      `/albums/${id}/with-tracks?resumeStream=false&richTracks=false&withListeningFinished=false`,
-    );
-
-    if (response.status !== 200) {
-      return err(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    if (!response.data?.volumes) {
-      return err("Invalid response format: missing volumes");
-    }
-
-    const trackIds = response.data.volumes.flatMap((volume: any[]) => volume.map((track: any) => track.id));
-
-    return ok(trackIds);
-  } catch (error) {
-    return err(`Failed to get album tracks: ${error}`);
-  }
-}
-
-// Получить треки из плейлиста
-export async function getPlaylistTracks(id: string): Promise<Result<string[], string>> {
-  try {
-    const response = await yandexMusicClient.get(`/playlist/${id}?resumeStream=false&richTracks=false`);
-
-    if (response.status !== 200) {
-      return err(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    if (!response.data?.tracks) {
-      return err("Invalid response format: missing tracks");
-    }
-
-    const trackIds = response.data.tracks.map((track: any) => track.id);
-
-    return ok(trackIds);
-  } catch (error) {
-    return err(`Failed to get playlist tracks: ${error}`);
-  }
-}
-
-// Получить треки артиста
-export async function getArtistTracks(id: string): Promise<Result<string[], string>> {
-  try {
-    const response = await yandexMusicClient.get(`/artists/${id}/track-ids?`);
-
-    if (response.status !== 200) {
-      return err(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    if (!response.data || !Array.isArray(response.data)) {
-      return err("Invalid response format: missing tracks");
-    }
-
-    const trackIds = response.data;
-
-    return ok(trackIds);
-  } catch (error) {
-    return err(`Failed to get playlist tracks: ${error}`);
-  }
-}
-
 // Получить треки по айди
 export async function getTracksInfo(trackIds: string[], skipAuth = false): Promise<Result<Array<any>, string>> {
   try {
@@ -188,51 +123,4 @@ export async function getTracksInfo(trackIds: string[], skipAuth = false): Promi
   } catch (error) {
     return err(`Failed to get tracks info: ${error}`);
   }
-}
-
-// Добавить трек в лайки пользователя
-export async function likeTrack(userId: number, trackId: string): Promise<Result<any, string>> {
-  try {
-    const response = await yandexMusicClient.post(
-      `/users/${userId}/likes/tracks/add?trackId=${trackId}`,
-      {},
-      {
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    if (response.status !== 200 && response.status !== 201) {
-      return err(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return ok(response.data);
-  } catch (error) {
-    return err(`Failed to add track to likes: ${error}`);
-  }
-}
-
-// Получить информацию об аккаунте
-export async function getAccountInfo(): Promise<Result<{ uid: number }, string>> {
-  try {
-    const response = await yandexMusicClient.get("/account/about");
-
-    if (response.status !== 200) {
-      return err(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    if (!response.data) {
-      return err("Invalid response format: missing data");
-    }
-
-    return ok(response.data);
-  } catch (error) {
-    return err(`Failed to get account info: ${error}`);
-  }
-}
-
-export function log(message: string, ...args: any[]): void {
-  console.log(`[Downloader] ${message}`, ...args);
 }
