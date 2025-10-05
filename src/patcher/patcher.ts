@@ -16,7 +16,7 @@ const staticFiles = {
   mainJs: "main/index.js",
   preloadJs: "main/lib/preload.js",
   createWindowJs: "main/lib/createWindow.js",
-  updaterJs: "main/lib/updater.js",
+  updaterJs: "main/lib/modUpdater.js",
   systemMenuJs: "main/lib/systemMenu.js",
 } as const;
 
@@ -86,21 +86,18 @@ async function removeSplashScreen(appPath: string, log: ProgressLogger) {
 }
 
 async function patchUpdater(updaterPath: string, log: ProgressLogger) {
-  log("🛠️  Patching updater URL");
-
+  try {
     let updaterContents = await fs.readFile(updaterPath, "utf8");
-    const oldUrl = "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest";
-    const newUrl = "https://api.github.com/repos/DarkPlayOff/YandexMusicAsar/releases/latest";
+    const oldRepoSlug = "TheKing-OfTime/YandexMusicModClient";
+    const newRepoSlug = "DarkPlayOff/YandexMusicAsar";
 
-    if (updaterContents.includes(oldUrl)) {
-      updaterContents = updaterContents.replaceAll(oldUrl, newUrl);
+    if (updaterContents.includes(oldRepoSlug)) {
+      updaterContents = updaterContents.replaceAll(oldRepoSlug, newRepoSlug);
       await fs.writeFile(updaterPath, updaterContents);
-    try {
-    log("✔️   Done");
-  } catch (error) {
-    log("⚠️  Splash screen was not found, skipping.");
+      log("✔️   Done link patching");
+    }
+  } catch {
   }
-}
 }
 
 async function buildAndInjectMods(
