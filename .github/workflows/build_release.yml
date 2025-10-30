@@ -88,7 +88,7 @@ jobs:
       - name: Архивация app.asar.unpacked
         shell: pwsh
         run: |
-          $UnpackedPath = "YandexMusicModClient\builds\latest\resources\app.asar.unpacked"
+          $UnpackedPath = "YandexMusicModClient\builds\latest\app.asar.unpacked"
           $ZipPath = ".\app.asar.unpacked.zip"
           
           Compress-Archive -Path $UnpackedPath -DestinationPath $ZipPath -Force
