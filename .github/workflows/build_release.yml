@@ -91,7 +91,7 @@ jobs:
           $UnpackedPath = "YandexMusicModClient\builds\latest\app.asar.unpacked"
           $ZipPath = ".\app.asar.unpacked.zip"
           
-          Compress-Archive -Path $UnpackedPath -DestinationPath $ZipPath -Force
+          Compress-Archive -Path "$UnpackedPath\*" -DestinationPath $ZipPath -Force
 
       - name: Создание релиза
         id: create_release
