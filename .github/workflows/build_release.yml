@@ -55,7 +55,9 @@ jobs:
         
       - name: Установка зависимостей
         working-directory: YandexMusicModClient
-        run: npm install
+        run: |
+         npm install 
+         bun install
 
       - name: сборка проекта
         working-directory: YandexMusicModClient
