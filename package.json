@@ -18,6 +18,9 @@
     "@types/js-yaml": "^4.0.9"
   },
   "devDependencies": {
+    "electron": "latest",
+    "vite": "latest",
+    "axios": "latest",
     "prettier": "^3.6.2",
     "js-yaml": "^4.1.0",
     "@types/bun": "latest",
