@@ -55,11 +55,15 @@ jobs:
         
       - name: Установка зависимостей
         working-directory: YandexMusicModClient
-        run: npm install
+        run: |
+         bun install
+         bun install -D vite
 
-      - name: Установка Vite
+      - name: Установка зависимостей
         working-directory: YandexMusicModClient
-        run: bun install -g vite
+        run: |
+          npm install
+          
         
       - name: сборка проекта
         working-directory: YandexMusicModClient
