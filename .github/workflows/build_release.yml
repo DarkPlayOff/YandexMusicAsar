@@ -14,11 +14,16 @@ jobs:
       - name: Checkout репозитория
         uses: actions/checkout@v4
 
-      - name: Установить Node.js
+      - name: Установка Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           check-latest: true
+          
+      - name: Установка Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
           
       - name: Получить информацию о последнем релизе
         id: get_latest_release
@@ -46,35 +51,43 @@ jobs:
       - name: Патчинг
         shell: pwsh
         run: |
-          ./PatcherApp.exe YandexMusicModClient/src
+          bun start YandexMusicModClient/src
         
-      - name: Установить зависимости
+      - name: Установка зависимостей
         working-directory: YandexMusicModClient
         run: npm install
 
-      - name: Собрать проект
+      - name: сборка проекта
         working-directory: YandexMusicModClient
         run: node toolset.js build -d -m
 
-      - name: Запаковка в GZ архив
+      - name: Запаковка в ZST архив
         shell: pwsh
         run: |
           $AsarPath = "C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar"
-          $GzPath = ".\app.asar.gz"
+          $ZstPath = ".\app.asar.zst"
           
-          # Копируем оригинальный файл для сохранения
           Copy-Item -Path $AsarPath -Destination ".\app.asar"
           
-          # Создаем GZ архив
-          $bytes = [System.IO.File]::ReadAllBytes($AsarPath)
-          $ms = New-Object System.IO.MemoryStream
-          $gz = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionLevel]::Optimal)
-          $gz.Write($bytes, 0, $bytes.Length)
-          $gz.Close()
-          [System.IO.File]::WriteAllBytes($GzPath, $ms.ToArray())
-          $ms.Close()
+          if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          }
+          
+          choco install zstandard --no-progress -y
 
-      - name: Создать релиз
+          zstd.exe --ultra -22 -f ".\app.asar" -o $ZstPath
+
+      - name: Архивация app.asar.unpacked
+        shell: pwsh
+        run: |
+          $UnpackedPath = "C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar.unpacked"
+          $ZipPath = ".\app.asar.unpacked.zip"
+          
+          Compress-Archive -Path $UnpackedPath -DestinationPath $ZipPath -Force
+
+      - name: Создание релиза
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
@@ -89,7 +102,7 @@ jobs:
             ${{ steps.get_latest_release.outputs.notes }}
             
           files: |
-            C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
-            app.asar.gz
+            app.asar.zst
+            app.asar.unpacked.zip
           draft: false
           fail_on_unmatched_files: true
