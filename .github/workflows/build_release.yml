@@ -24,6 +24,11 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+
+      - name: Установка зависимостей
+        working-directory: YandexMusicModClient
+        run: |
+         bun install -D vite
           
       - name: Получить информацию о последнем релизе
         id: get_latest_release
@@ -52,12 +57,6 @@ jobs:
         shell: pwsh
         run: |
           bun start YandexMusicModClient/src
-        
-      - name: Установка зависимостей
-        working-directory: YandexMusicModClient
-        run: |
-         bun install
-         bun install -D vite
 
       - name: Установка зависимостей
         working-directory: YandexMusicModClient
