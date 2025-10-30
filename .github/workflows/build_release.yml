@@ -55,18 +55,20 @@ jobs:
         
       - name: Установка зависимостей
         working-directory: YandexMusicModClient
-        run: |
-         npm install 
-         bun install
+        run: npm install
 
+      - name: Установка Vite
+        working-directory: YandexMusicModClient
+        run: bun install -g vite
+        
       - name: сборка проекта
         working-directory: YandexMusicModClient
-        run: node toolset.js build -d -m
+        run: node toolset.js build  -m
 
       - name: Запаковка в ZST архив
         shell: pwsh
         run: |
-          $AsarPath = "C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar"
+          $AsarPath = "YandexMusicModClient\builds\latest\app.asar"
           $ZstPath = ".\app.asar.zst"
           
           Copy-Item -Path $AsarPath -Destination ".\app.asar"
@@ -84,7 +86,7 @@ jobs:
       - name: Архивация app.asar.unpacked
         shell: pwsh
         run: |
-          $UnpackedPath = "C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar.unpacked"
+          $UnpackedPath = "YandexMusicModClient\builds\latest\resources\app.asar.unpacked"
           $ZipPath = ".\app.asar.unpacked.zip"
           
           Compress-Archive -Path $UnpackedPath -DestinationPath $ZipPath -Force
