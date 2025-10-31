@@ -17,7 +17,7 @@ jobs:
       latest_version: ${{ steps.check_versions.outputs.latest_version }}
 
     steps:
-      - name: Получить информацию о последнем релизе оригинального репозитория
+      - name: Получение информации о последнем релизе из оригинального репозитория
         id: get_original_release
         run: |
           ORIGINAL_RELEASE=$(curl -s https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest)
@@ -25,7 +25,7 @@ jobs:
           echo "Оригинальная версия: $ORIGINAL_VERSION"
           echo "original_version=$ORIGINAL_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Получить информацию о последнем релизе в нашем репозитории
+      - name: Получение информации о последнем релизе из репозитория
         id: get_our_release
         run: |
           OUR_RELEASES=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases)
@@ -38,7 +38,7 @@ jobs:
             echo "our_version=none" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Сравнить версии и решить о необходимости сборки
+      - name: Сравнивание версий
         id: check_versions
         run: |
           ORIGINAL="${{ steps.get_original_release.outputs.original_version }}"
@@ -56,34 +56,7 @@ jobs:
           echo "latest_version=$ORIGINAL" >> "$GITHUB_OUTPUT"
 
   build-if-needed:
-    name: Запуск сборки при необходимости
+    name: Сборка
     needs: check-for-updates
     if: needs.check-for-updates.outputs.needs_build == 'true'
     uses: ./.github/workflows/build_release.yml
-
-  cleanup-old-runs:
-    name: Очистить старые workflow runs
-    runs-on: ubuntu-latest
-    needs: check-for-updates
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Удаление старых запусков
-        run: |
-          WORKFLOW_ID=$(gh api repos/${{ github.repository }}/actions/workflows | jq -r '.workflows[] | select(.name == "Check for New YandexMusicModClient Releases") | .id')
-
-          if [ -z "$WORKFLOW_ID" ]; then
-            echo "Workflow ID не найден."
-            exit 0
-          fi
-
-          RUNS=$(gh api "repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs?per_page=100")
-          COUNT=$(echo "$RUNS" | jq '.workflow_runs | length')
-
-          if [ "$COUNT" -le 10 ]; then
-            exit 0
-          fi
-
-          echo "$RUNS" | jq -r '.workflow_runs[3:][] | .id' | while read -r ID; do
-            gh api -X DELETE "repos/${{ github.repository }}/actions/runs/$ID"
-          done
