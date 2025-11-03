@@ -15,7 +15,6 @@ const staticFiles = {
   configJs: "main/config.js",
   mainJs: "main/index.js",
   preloadJs: "main/lib/preload.js",
-  createWindowJs: "main/lib/createWindow.js",
   updaterJs: "main/lib/modUpdater.js",
   systemMenuJs: "main/lib/systemMenu.js",
 } as const;
