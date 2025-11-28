@@ -5,10 +5,6 @@ permissions:
     contents: write
     actions: write
   
-  concurrency:
-    group: ${{ github.workflow }}
-    cancel-in-progress: true
-  
   on:
     workflow_dispatch:
     schedule:
