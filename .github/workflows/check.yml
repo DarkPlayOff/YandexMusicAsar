@@ -1,55 +1,61 @@
 name: Check for New YandexMusicModClient Releases
 
 permissions:
-    contents: write
-    actions: write
+  contents: write
+  actions: write
 
 on:
-    workflow_dispatch:
-    schedule:
-      - cron: '0 */3 * * *'
-  
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */3 * * *'
+
 jobs:
-    check-for-updates:
-      runs-on: ubuntu-latest
-      outputs:
-        needs_build: ${{ steps.check_versions.outputs.needs_build }}
-        latest_version: ${{ steps.check_versions.outputs.latest_version }}
-  
-      steps:
-        - name: Получение информации о последнем релизе из оригинального репозитория
-          id: get_original_release
-          env:
-            GH_TOKEN: ${{ github.token }}
-          run: |
-            ORIGINAL_VERSION=$(gh release view --repo TheKing-OfTime/YandexMusicModClient --json tagName -q .tagName)
-            echo "Оригинальная версия: $ORIGINAL_VERSION"
-            echo "original_version=$ORIGINAL_VERSION" >> "$GITHUB_OUTPUT"
-  
-        - name: Получение информации о последнем релизе из репозитория
-          id: get_our_release
-          env:
-            GH_TOKEN: ${{ github.token }}
-          run: |
-            OUR_VERSION_TAG=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName -q '.[0].tagName // "none"')
-            OUR_VERSION=$(echo "$OUR_VERSION_TAG" | sed 's/^mod-//')
+  check-for-updates:
+    runs-on: ubuntu-latest
+    outputs:
+      needs_build: ${{ steps.check_versions.outputs.needs_build }}
+      latest_version: ${{ steps.check_versions.outputs.latest_version }}
+
+    steps:
+      - name: Получение информации о последнем релизе из оригинального репозитория
+        id: get_original_release
+        run: |
+          ORIGINAL_RELEASE=$(curl -s https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest)
+          ORIGINAL_VERSION=$(echo "$ORIGINAL_RELEASE" | jq -r .tag_name)
+          echo "Оригинальная версия: $ORIGINAL_VERSION"
+          echo "original_version=$ORIGINAL_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Получение информации о последнем релизе из репозитория
+        id: get_our_release
+        run: |
+          OUR_RELEASES=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases)
+          if [ "$(echo "$OUR_RELEASES" | jq length)" -gt 0 ]; then
+            OUR_VERSION=$(echo "$OUR_RELEASES" | jq -r '.[0].tag_name' | sed 's/^mod-//')
             echo "Наша последняя версия: $OUR_VERSION"
             echo "our_version=$OUR_VERSION" >> "$GITHUB_OUTPUT"
-  
-        - name: Сравнивание версий
-          id: check_versions
-          run: |
-            ORIGINAL="${{ steps.get_original_release.outputs.original_version }}"
-            OUR="${{ steps.get_our_release.outputs.our_version }}"
-            if [ "$ORIGINAL" = "$OUR" ]; then
-              echo "Версии совпадают: $ORIGINAL. Сборка не требуется."
-              echo "needs_build=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "Нужна сборка новой версии: $ORIGINAL"
-              echo "needs_build=true" >> "$GITHUB_OUTPUT"
-            fi
-            echo "latest_version=$ORIGINAL" >> "$GITHUB_OUTPUT"
-build-if-needed:
+          else
+            echo "В репозитории нет релизов"
+            echo "our_version=none" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Сравнивание версий
+        id: check_versions
+        run: |
+          ORIGINAL="${{ steps.get_original_release.outputs.original_version }}"
+          OUR="${{ steps.get_our_release.outputs.our_version }}"
+          NEEDS_BUILD="true"
+
+          if [ "$OUR" != "none" ] && [ "$ORIGINAL" = "$OUR" ]; then
+            echo "Версии совпадают: $ORIGINAL. Сборка не требуется."
+            NEEDS_BUILD="false"
+          else
+            echo "Нужна сборка новой версии: $ORIGINAL"
+          fi
+
+          echo "needs_build=$NEEDS_BUILD" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$ORIGINAL" >> "$GITHUB_OUTPUT"
+
+  build-if-needed:
     name: Сборка
     needs: check-for-updates
     if: needs.check-for-updates.outputs.needs_build == 'true'
