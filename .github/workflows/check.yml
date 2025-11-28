@@ -1,16 +1,15 @@
 name: Check for New YandexMusicModClient Releases
 
 permissions:
-  permissions:
     contents: write
     actions: write
-  
-  on:
+
+on:
     workflow_dispatch:
     schedule:
       - cron: '0 */3 * * *'
   
-  jobs:
+jobs:
     check-for-updates:
       runs-on: ubuntu-latest
       outputs:
@@ -50,7 +49,7 @@ permissions:
               echo "needs_build=true" >> "$GITHUB_OUTPUT"
             fi
             echo "latest_version=$ORIGINAL" >> "$GITHUB_OUTPUT"
-  build-if-needed:
+build-if-needed:
     name: Сборка
     needs: check-for-updates
     if: needs.check-for-updates.outputs.needs_build == 'true'
