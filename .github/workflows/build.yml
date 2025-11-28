@@ -1,39 +1,82 @@
 name: Patch and Build
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout репозитория
         uses: actions/checkout@v4
 
-      - name: Установить Node.js
+      - name: Установка Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           check-latest: true
+          
+      - name: Установка Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Установка зависимостей bun
+        run: |
+         bun install -D vite
           
       - name: Клонировать YandexMusicModClient
         run: git clone https://github.com/TheKing-OfTime/YandexMusicModClient.git
         
       - name: Патчинг
         shell: pwsh
-        run: ./PatcherApp.exe YandexMusicModClient/src
+        run: |
+          bun start YandexMusicModClient/src
 
-      - name: Установить зависимости
+      - name: Установка зависимостей
         working-directory: YandexMusicModClient
-        run: npm install
-
-      - name: Собрать проект
+        run: |
+          npm install
+          
+        
+      - name: сборка проекта
         working-directory: YandexMusicModClient
-        run: node toolset.js build -d
+        run: node toolset.js build  -m
 
-      - name: Загрузить артефакт сборки
+      - name: Запаковка в ZST архив
+        shell: pwsh
+        run: |
+          $AsarPath = "YandexMusicModClient\builds\latest\app.asar"
+          $ZstPath = ".\app.asar.zst"
+          
+          Copy-Item -Path $AsarPath -Destination ".\app.asar"
+          
+          if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          }
+          
+          choco install zstandard --no-progress -y
+
+          zstd.exe --ultra -22 -f ".\app.asar" -o $ZstPath
+
+      - name: Архивация app.asar.unpacked
+        shell: pwsh
+        run: |
+          $UnpackedPath = "YandexMusicModClient\builds\latest\app.asar.unpacked\"
+          $ZipPath = ".\app.asar.unpacked.zip"
+          
+          Compress-Archive -Path "$UnpackedPath\*" -DestinationPath $ZipPath -Force
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: YandexMusicModClient-Windows-Build
-          path: C:\Users\runneradmin\AppData\Local\Programs\YandexMusic\resources\app.asar
+          name: build-artifacts
+          path: |
+            app.asar.zst
+            app.asar.unpacked.zip

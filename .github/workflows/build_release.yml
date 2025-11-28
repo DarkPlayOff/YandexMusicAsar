@@ -36,7 +36,8 @@ jobs:
           $response = Invoke-RestMethod -Uri "https://api.github.com/repos/TheKing-OfTime/YandexMusicModClient/releases/latest"
           $version = $response.tag_name
           $releaseTitle = $response.name
-          $releaseNotes = $response.body
+          $patchNotesUrl = "https://raw.githubusercontent.com/TheKing-OfTime/YandexMusicModClient/master/PATCHNOTES.md"
+          $releaseNotes = Invoke-RestMethod -Uri $patchNotesUrl
           if ($releaseNotes -match "(?s)(.*?)[#]{1,3}\s*Установка.*") {
             $releaseNotes = $matches[1].Trim()
           }
