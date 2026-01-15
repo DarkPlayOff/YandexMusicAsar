@@ -41,6 +41,7 @@ jobs:
         working-directory: YandexMusicModClient
         run: |
           npm install
+          npm install -D @vitejs/plugin-react
           
         
       - name: сборка проекта
