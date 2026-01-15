@@ -41,7 +41,7 @@ jobs:
         working-directory: YandexMusicModClient
         run: |
           npm install
-          cd YandexMusicModClient-master\miniplayer
+          cd miniplayer
           npm install
           cd ..
         
