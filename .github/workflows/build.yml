@@ -41,10 +41,11 @@ jobs:
         working-directory: YandexMusicModClient
         run: |
           npm install
-          npm install -D @vitejs/plugin-react
-          
+          cd YandexMusicModClient-master\miniplayer
+          npm install
+          cd ..
         
-      - name: сборка проекта
+      - name: Cборка проекта
         working-directory: YandexMusicModClient
         run: node toolset.js build  -m
 
